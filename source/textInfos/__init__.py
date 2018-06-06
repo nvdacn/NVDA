@@ -2,7 +2,7 @@
 #A part of NonVisual Desktop Access (NVDA)
 #This file is covered by the GNU General Public License.
 #See the file COPYING for more details.
-#Copyright (C) 2006-2014 NV Access Limited
+#Copyright (C) 2006-2018 NV Access Limited, Babbage B.V.
 
 """Framework for accessing text content in widgets.
 The core component of this framework is the L{TextInfo} class.
@@ -232,7 +232,7 @@ class TextInfo(baseObject.AutoPropertyObject):
 		* Support at least the L{POSITION_FIRST}, L{POSITION_LAST} and L{POSITION_ALL} positions.
 	If an implementation should support tracking with the mouse,
 	L{Points} must be supported as a position.
-	To support routing to a screen point from a given position, L{pointAtStart} must be implemented.
+	To support routing to a screen point from a given position, L{pointAtStart} or L{boundingRect} must be implemented.
 	In order to support text formatting or control information, L{getTextWithFields} should be overridden.
 	
 	@ivar bookmark: A unique identifier that can be used to make another textInfo object at this position.
@@ -280,6 +280,16 @@ class TextInfo(baseObject.AutoPropertyObject):
 	def _get_locationText(self):
 		"""A message that explains the location of the text position in friendly terms."""
 		return None
+
+	def _get_boundingRect(self):
+		"""The bounding rectangle for the visible text in this range.
+		Note that the bounding rectangle may contain other characters outside this range,
+		for example in the case where a selection starts at the end of one line and ends at the start of another.
+		@rtype: L{locationHelper.RectLTWH}; C{None} if there is no rectangle.
+		@raise NotImplementedError: If not supported.
+		@raise LookupError: If not available.
+		"""
+		raise NotImplementedError
 
 	def unitIndex(self,unit):
 		"""
@@ -407,8 +417,18 @@ class TextInfo(baseObject.AutoPropertyObject):
 		return self.obj
 
 	def _get_pointAtStart(self):
-		"""Retrieves x and y coordinates corresponding with the textInfo start. It should return Point"""
-		raise NotImplementedError
+		"""Retrieves x and y coordinates corresponding with the textInfo start. It should return Point.
+		The base implementation uses L{boundingRect}.
+		"""
+		try:
+			boundingRect = self.boundingRect
+		except LookupError:
+			copy = self.copy()
+			if copy.isCollapsed:
+				# Try to expand to character and fetch another bounding rectangle.
+				copy.expand(UNIT_CHARACTER)
+				boundingRect = copy.boundingRect
+		return boundingRect.topLeft
 
 	def _get_clipboardText(self):
 		"""Text suitably formatted for copying to the clipboard. E.g. crlf characters inserted between lines."""
