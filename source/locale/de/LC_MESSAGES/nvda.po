@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: NVDA\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-04 00:10+1000\n"
+"POT-Creation-Date: 2018-06-08 00:10+1000\n"
 "PO-Revision-Date: \n"
 "Last-Translator: Adriani Botez <adriani.botez@gmail.com>\n"
 "Language-Team: \n"
@@ -4331,6 +4331,22 @@ msgstr ""
 msgid "Shows the NVDA Configuration Profiles dialog"
 msgstr "Zeigt den Dialog für Konfigurationsprofile von NVDA an."
 
+#. Translators: The message announced when temporarily disabling all configuration profile triggers.
+msgid "Configuration profile triggers disabled"
+msgstr "Profilauslöser deaktiviert"
+
+#. Translators: The message announced when re-enabling all configuration profile triggers.
+msgid "Configuration profile triggers enabled"
+msgstr "Profielauslöser aktiviert"
+
+#. Translators: Input help mode message for toggle configuration profile triggers command.
+msgid ""
+"Toggles disabling of all configuration profile triggers. Disabling remains "
+"in effect until NVDA is restarted"
+msgstr ""
+"Schaltet die Deaktivierung aller Profilauslöser um. Die Deaktivierung bleibt "
+"wirksam, bis NVDA neu gestartet wird"
+
 #. Translators: Reported when the user attempts math interaction
 #. with something that isn't math.
 msgid "Not math"
@@ -5917,7 +5933,7 @@ msgstr "Reihe %s"
 #. Translators: Speaks the column span added to the current column number (example output: through 5).
 #, python-format
 msgid "through %s"
-msgstr "durch %s"
+msgstr "bis %s"
 
 #. Translators: Speaks current column number (example output: column 3).
 #, python-format
@@ -5927,7 +5943,7 @@ msgstr "Spalte %s"
 #. Translators: Speaks the row and column span added to the current row and column numbers
 #. (example output: through row 5 column 3).
 msgid "through row {row} column {column}"
-msgstr "durch Reihe {row} Spalte {column}"
+msgstr "bis Reihe {row} Spalte {column}"
 
 #. Translators: Speaks number of columns and rows in a table (example output: with 3 rows and 2 columns).
 msgid "with {rowCount} rows and {columnCount} columns"
@@ -6483,11 +6499,11 @@ msgstr "Aktualisierung &installieren"
 
 #. Translators: The label of a button to postpone an NVDA update.
 msgid "&Postpone update"
-msgstr "Installation &vertagen"
+msgstr "Installation &später durchführen"
 
 #. Translators: The message when a downloaded update file could not be preserved.
 msgid "Unable to postpone update."
-msgstr "Nicht in der Lage, die Installation der Aktualisierung zu vertagen."
+msgstr "die Installation der Aktualisierung kann nicht verschoben werden."
 
 #. Translators: The title of the dialog displayed while downloading an NVDA update.
 msgid "Downloading Update"
@@ -7490,7 +7506,7 @@ msgstr "Einga&ben..."
 
 #. Translators: The label for Preferences submenu in NVDA menu.
 msgid "&Preferences"
-msgstr "&Anpassen"
+msgstr "&Optionen"
 
 #. Translators: The label for the menu item to open NVDA Log Viewer.
 msgid "View log"
@@ -8315,6 +8331,18 @@ msgstr "Speichern unter"
 msgid "Error saving log: %s"
 msgstr "Fehler beim Speichern des Protokolls %s."
 
+#. Translators: The Ok button on a NVDA dialog. This button will accept any changes and dismiss the dialog.
+msgid "OK"
+msgstr "Ok"
+
+#. Translators: The cancel button on a NVDA dialog. This button will discard any changes and dismiss the dialog.
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#. Translators: The Apply button on a NVDA dialog. This button will accept any changes but will not dismiss the dialog.
+msgid "Apply"
+msgstr "Übernehmen"
+
 #. Translators: The label for the list of categories in a multi category settings dialog.
 msgid "&Categories:"
 msgstr "&Kategorien:"
@@ -8457,11 +8485,11 @@ msgstr "&Sprachausgabe"
 #. Translators: This is the label for the button used to change braille display,
 #. it appears in the context of a braille display group on the braille settings panel.
 msgid "C&hange..."
-msgstr "&ändern..."
+msgstr "Än&dern..."
 
 #. Translators: This is the label for the synthesizer selection dialog
 msgid "Select Synthesizer"
-msgstr "Wählen sie eine Sprachausgabe"
+msgstr "Wählen sie eine Sprachausgabe aus"
 
 #. Translators: This is a label for the select
 #. synthesizer combobox in the synthesizer dialog.
@@ -10264,7 +10292,7 @@ msgstr "&Diagramme"
 #. Translators: The label of a radio button to select the type of element
 #. in the browse mode Elements List dialog.
 msgid "C&omments"
-msgstr "k&ommentare"
+msgstr "K&ommentare"
 
 #. Translators: The label of a radio button to select the type of element
 #. in the browse mode Elements List dialog.
@@ -10297,7 +10325,7 @@ msgstr "Die Zelle {address} wurde aus der Spaltenüberschrift entfernt"
 #. Translators: a message reported in the SetColumnHeader script for Excel.
 msgid "Cannot find {address}    in column headers"
 msgstr ""
-"Die Zelle {address} kann in der Spaltenüberschrift nicht gefunden werden."
+"Die Zelle {address} kann in der Spaltenüberschrift nicht gefunden werden"
 
 msgid ""
 "Pressing once will set this cell as the first column header for any cells "
@@ -10317,7 +10345,7 @@ msgstr "Die Zelle {address} wurde als Beginn der Zeilenbeschriftung festgelegt"
 msgid "Already set {address} as start of row headers"
 msgstr ""
 "Die Zelle {address} wurde bereits als Beginn der Zeilenbeschriftung "
-"festgelegt."
+"festgelegt"
 
 #. Translators: a message reported in the SetRowHeader script for Excel.
 msgid "Removed {address}    from row headers"
@@ -10326,7 +10354,7 @@ msgstr "Die Zelle {address} wurde aus der Zeilenbeschriftung entfernt"
 #. Translators: a message reported in the SetRowHeader script for Excel.
 msgid "Cannot find {address}    in row headers"
 msgstr ""
-"Die Zelle {address} konnte in der Zeilenbeschriftung nicht gefunden werden."
+"Die Zelle {address} konnte in der Zeilenbeschriftung nicht gefunden werden"
 
 msgid ""
 "Pressing once will set this cell as the first row header for any cells lower "
@@ -10343,14 +10371,14 @@ msgid "Sheet {0}, {1}"
 msgstr "Tabelle {0}, {1}"
 
 msgid "Input Message is {title}: {message}"
-msgstr "die eingegebene Meldung lautet  {title}: {message}"
+msgstr "Die eingegebene Meldung lautet  {title}: {message}"
 
 msgid "Input Message is {message}"
-msgstr "die eingegebene Meldung lautet  {message}"
+msgstr "Die eingegebene Meldung lautet  {message}"
 
 #. Translators: A message in Excel when there is no comment
 msgid "Not on a comment"
-msgstr "Nicht in einem Kommentar."
+msgstr "Nicht in einem Kommentar"
 
 #. Translators: the description  for a script for Excel
 msgid "Reports the comment on the current cell"
