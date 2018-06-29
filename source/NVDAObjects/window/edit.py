@@ -384,6 +384,11 @@ class EditTextInfo(textInfos.offsets.OffsetsTextInfo):
 
 	def _getLineOffsets(self,offset):
 		lineNum=self._getLineNumFromOffset(offset)
+		if self._getLineCount()>0 and lineNum==0 and self.obj.editAPIVersion==-1:
+			# ##8461: Some unidentified edit control implementations are really broken.
+			# EditPlus, for example, does not implement window messages to get the line for a specific offset.
+			# Fall back to the base implementation, which uses uniscribe.
+			return super(EditTextInfo, self)._getLineOffsets(offset)
 		start=watchdog.cancellableSendMessage(self.obj.windowHandle,winUser.EM_LINEINDEX,lineNum,0)
 		length=watchdog.cancellableSendMessage(self.obj.windowHandle,winUser.EM_LINELENGTH,offset,0)
 		end=start+length
