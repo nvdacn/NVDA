@@ -18,9 +18,57 @@ from comtypes.gen.IAccessible2Lib import IAccessible2
 from comtypes import COMError
 import aria
 import config
-from NVDAObjects.IAccessible import normalizeIA2TextFormatField
+from NVDAObjects.IAccessible import normalizeIA2TextFormatField, IA2TextTextInfo, getNVDAObjectFromPoint
 
 class Gecko_ia2_TextInfo(VirtualBufferTextInfo):
+
+	def _getPointFromOffset(self,offset):
+		formatFieldStart, formatFieldEnd = self._getUnitOffsets(self.UNIT_FORMATFIELD, offset)
+		# The format field starts at the first character.
+		for field in reversed(self._getFieldsInRange(formatFieldStart, formatFieldStart+1)):
+			if not (isinstance(field, textInfos.FieldCommand) and field.command == "formatChange"):
+				# This is no format field.
+				continue
+			attrs = field.field
+			ia2TextStartOffset = attrs.get("ia2TextStartOffset")
+			if ia2TextStartOffset is None:
+				continue
+			ia2TextStartOffset += attrs.get("strippedCharsFromStart", 0)
+			relOffset = offset - formatFieldStart + ia2TextStartOffset
+			obj = self._getNVDAObjectFromOffset(offset)
+			if not issubclass(obj.TextInfo, IA2TextTextInfo):
+				raise LookupError("TextInfo is of type %r and does not provide reliable points" % obj.TextInfo)
+			# Position is irrelevant here, we just need a text info to work with
+			info = obj.makeTextInfo(textInfos.POSITION_FIRST)
+			return info._getPointFromOffset(relOffset)
+		return super(Gecko_ia2_TextInfo, self)._getPointFromOffset(offset)
+
+	def _getOffsetFromPoint(self,x,y):
+		# This is only expected to be called when the virtual buffer document has focus.
+		# Use the IAccessible specific getNVDAObjectFromPoint function, since IA2 is expected.
+		obj = getNVDAObjectFromPoint(x, y)
+		if not obj or not isinstance(obj.IAccessibleObject, IAccessible2):
+			raise LookupError
+		while obj:
+			try:
+				start, end = self._getOffsetsFromNVDAObject(obj)
+				break
+			except LookupError:
+				obj = obj.parent
+		if not obj or not issubclass(obj.TextInfo, IA2TextTextInfo):
+			raise LookupError
+		# Find out whether this object contains text that has been stripped in the virtual buffer.
+		for field in reversed(self._getFieldsInRange(start, start+1)):
+			if not (isinstance(field, textInfos.FieldCommand) and field.command == "formatChange"):
+				# This is no format field.
+				continue
+			strippedCharsFromStart = field.field.get("strippedCharsFromStart")
+			if strippedCharsFromStart is not None:
+				break
+		else:
+			strippedCharsFromStart = 0
+		relOffset = obj.makeTextInfo(textInfos.Point(x, y))._startOffset
+		return start - strippedCharsFromStart + relOffset
 
 	def _normalizeControlField(self,attrs):
 		for attr in ("table-physicalrownumber","table-physicalcolumnnumber","table-physicalrowcount","table-physicalcolumncount"):
@@ -84,7 +132,11 @@ class Gecko_ia2_TextInfo(VirtualBufferTextInfo):
 
 	def _normalizeFormatField(self, attrs):
 		normalizeIA2TextFormatField(attrs)
-		return attrs
+		ia2TextStartOffset = attrs.get("ia2TextStartOffset")
+		if ia2TextStartOffset is not None:
+			assert ia2TextStartOffset.isdigit, "ia2TextStartOffset is no digit, %r" % ia2TextStartOffset
+			attrs["ia2TextStartOffset"] = int(ia2TextStartOffset)
+		return super(Gecko_ia2_TextInfo,self)._normalizeFormatField(attrs)
 
 class Gecko_ia2(VirtualBuffer):
 
