@@ -1,5 +1,5 @@
 #A part of NonVisual Desktop Access (NVDA)
-#Copyright (C) 2006-2018 NV Access Limited 
+#Copyright (C) 2006-2018 NV Access Limited, Babbage B.V.
 #This file is covered by the GNU General Public License.
 #See the file COPYING for more details.
 
@@ -31,6 +31,7 @@ from NVDAObjects import NVDAObject, NVDAObjectTextInfo, InvalidNVDAObject
 import NVDAObjects.JAB
 import eventHandler
 from NVDAObjects.behaviors import ProgressBar, Dialog, EditableTextWithAutoSelectDetection, FocusableUnfocusableContainer, ToolTip, Notification
+from locationHelper import RectLTWH
 
 def getNVDAObjectFromEvent(hwnd,objectID,childID):
 	try:
@@ -115,19 +116,29 @@ class IA2TextTextInfo(textInfos.offsets.OffsetsTextInfo):
 
 	def _getOffsetFromPoint(self,x,y):
 		if self.obj.IAccessibleTextObject.nCharacters>0:
-			return self.obj.IAccessibleTextObject.OffsetAtPoint(x,y,IAccessibleHandler.IA2_COORDTYPE_SCREEN_RELATIVE)
+			offset = self.obj.IAccessibleTextObject.OffsetAtPoint(x,y,IAccessibleHandler.IA2_COORDTYPE_SCREEN_RELATIVE)
+			# IA2 specifies that a result of -1 indicates that
+			# the point is invalid or there is no character under the point.
+			# Note that Chromium does not follow the spec and returns 0 for invalid or no character points.
+			if offset == -1:
+				raise LookupError("Invalid point or no character under point")
+			return offset
 		else:
-			raise NotImplementedError
+			raise LookupError
 
-	def _getPointFromOffset(self,offset):
+	def _getBoundingRectFromOffset(self,offset):
 		try:
 			res=self.obj.IAccessibleTextObject.characterExtents(offset,IAccessibleHandler.IA2_COORDTYPE_SCREEN_RELATIVE)
 		except COMError:
 			raise NotImplementedError
-		# Using the center of the character's bounding rectangle could result in a point
-		# of which IA2 believes that it belongs to a higher offset.
-		point=textInfos.Point(res[0],res[1])
-		return point
+		if not any(res[2:]):
+			# Gecko tends to return (0,0,0,0) rectangles sometimes, for example in empty text fields.
+			# Chromium could return rectangles that are positioned at the upper left corner of the object,
+			# and they have a width and height of 0.
+			# Other IA2 implementations, such as the one in LibreOffice,
+			# tend to return the caret rectangle in this case, which is ok.
+			raise LookupError
+		return RectLTWH(*res)
 
 	def _get_unit_mouseChunk(self):
 		return "mouseChunk"
@@ -904,7 +915,7 @@ the NVDAObject for IAccessible
 
 	def _get_location(self):
 		try:
-			return self.IAccessibleObject.accLocation(self.IAccessibleChildID)
+			return RectLTWH(*self.IAccessibleObject.accLocation(self.IAccessibleChildID))
 		except COMError:
 			return None
 

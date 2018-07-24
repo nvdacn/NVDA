@@ -31,6 +31,7 @@ from NVDAObjects import NVDAObjectTextInfo, InvalidNVDAObject
 from NVDAObjects.behaviors import ProgressBar, EditableTextWithoutAutoSelectDetection, Dialog, Notification, EditableTextWithSuggestions
 import braille
 import time
+from locationHelper import RectLTWH
 import ui
 
 class UIATextInfo(textInfos.TextInfo):
@@ -310,10 +311,9 @@ class UIATextInfo(textInfos.TextInfo):
 			# sometimes rangeFromChild can return a NULL range
 			if not self._rangeObj: raise LookupError
 		elif isinstance(position,textInfos.Point):
-			#rangeFromPoint causes a freeze in UIA client library!
-			#p=POINT(position.x,position.y)
-			#self._rangeObj=self.obj.UIATextPattern.RangeFromPoint(p)
-			raise NotImplementedError
+			#rangeFromPoint used to cause a freeze in UIA client library!
+			p=POINT(position.x,position.y)
+			self._rangeObj=self.obj.UIATextPattern.RangeFromPoint(p)
 		elif isinstance(position,UIAHandler.IUIAutomationTextRange):
 			self._rangeObj=position.clone()
 		else:
@@ -636,6 +636,29 @@ class UIATextInfo(textInfos.TextInfo):
 
 	def _get_text(self):
 		return self._getTextFromUIARange(self._rangeObj)
+
+	def _getBoundingRectsFromUIARange(self,range):
+		"""
+		Fetches per line bounding rectangles from the given UI Automation text range.
+		Note that if the range object doesn't cover a whole line (e.g. a character),
+		the bounding rectangle will be restriked to the range.
+		@rtype: [locationHelper.RectLTWH]
+		"""
+		rects = []
+		rectArray = range.GetBoundingRectangles()
+		if not rectArray:
+			return rects
+		rects.extend(
+			RectLTWH.fromNonInts(*rectArray[i:i+4])
+			for i in xrange(0, len(rectArray), 4)
+		)
+		return rects
+
+	def _get_boundingRect(self):
+		rects = self._getBoundingRectsFromUIARange(self._rangeObj)
+		if not rects:
+			raise LookupError
+		return RectLTWH.fromCollection(*rects)
 
 	def expand(self,unit):
 		UIAUnit=UIAHandler.NVDAUnitsToUIAUnits[unit]
@@ -1058,7 +1081,8 @@ class UIA(Window):
 		UIAHandler.UIA_IsKeyboardFocusablePropertyId,
 		UIAHandler.UIA_IsPasswordPropertyId,
 		UIAHandler.UIA_IsSelectionItemPatternAvailablePropertyId,
-		UIAHandler.UIA_IsEnabledPropertyId
+		UIAHandler.UIA_IsEnabledPropertyId,
+		UIAHandler.UIA_IsOffscreenPropertyId,
 	}  if UIAHandler.isUIAAvailable else set()
 
 	def _get_states(self):
@@ -1083,6 +1107,12 @@ class UIA(Window):
 				states.add(controlTypes.STATE_CHECKED if role==controlTypes.ROLE_RADIOBUTTON else controlTypes.STATE_SELECTED)
 		if not self._getUIACacheablePropertyValue(UIAHandler.UIA_IsEnabledPropertyId,True):
 			states.add(controlTypes.STATE_UNAVAILABLE)
+		try:
+			isOffScreen = self._getUIACacheablePropertyValue(UIAHandler.UIA_IsOffscreenPropertyId)
+		except COMError:
+			isOffScreen = False
+		if isOffScreen:
+			states.add(controlTypes.STATE_OFFSCREEN)
 		try:
 			isDataValid=self._getUIACacheablePropertyValue(UIAHandler.UIA_IsDataValidForFormPropertyId,True)
 		except COMError:
@@ -1296,12 +1326,7 @@ class UIA(Window):
 		if r is None:
 			return
 		# r is a tuple of floats representing left, top, width and height.
-		# However, most NVDA code expecs location coordinates to be ints 
-		left=int(r[0])
-		top=int(r[1])
-		width=int(r[2])
-		height=int(r[3])
-		return left,top,width,height
+		return RectLTWH.fromNonInts(*r)
 
 	def _get_value(self):
 		val=self._getUIACacheablePropertyValue(UIAHandler.UIA_RangeValueValuePropertyId,True)
@@ -1347,6 +1372,13 @@ class UIA(Window):
 			return self._getUIACacheablePropertyValue(UIAHandler.UIA_HasKeyboardFocusPropertyId)
 		except COMError:
 			return False
+
+	def _get_hasIrrelevantLocation(self):
+		try:
+			isOffScreen = self._getUIACacheablePropertyValue(UIAHandler.UIA_IsOffscreenPropertyId)
+		except COMError:
+			isOffScreen = False
+		return isOffScreen or not self.location or not any(self.location)
 
 	def _get_positionInfo(self):
 		info=super(UIA,self).positionInfo or {}
